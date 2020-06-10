@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Title</title>
+        <link rel="stylesheet" href="/static/commons.css" />
+        <style>
+            .host-tag{
+                display: inline-block;
+                padding: 3px;
+                border: 1px solid red;
+                background-color: pink;
+            }
+            .hide{
+                display: none;
+            }
+            .shade{
+                position: fixed;
+                top: 0;
+                right: 0;
+                left: 0;
+                bottom: 0;
+                background: black;
+                opacity: 0.6;
+            }
+            .add-modal, .edit-modal{
+                position: fixed;
+                height: 200px;
+                width: 300px;
+                top: 100px;
+                left: 50%;
+                border: 1px solid red;
+                background: white;
+                margin-left: -200px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>应用列表</h1>
+        <div>
+            <input id='add_app' type='button' value='添加' />
+        </div>
+        <table border="1">
+            <thead>
+                <tr>
+                    <td>应用名称</td>
+                    <td>应用主机列表</td>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in app_list %}
+                    <tr aid="{{app.id}}">
+                        <td>{{row.name}}</td>
+                        <td>
+                            {% for host in row.r.all %}
+                                <span class='host-tag' hid="{{host.nid}}">{{host.hostname}}</span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <a class="edit">编辑</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                <tr></tr>
+            </tbody>
+        </table>
+        <div class="shade hide"></div>
+        <div class="add-modal hide">
+            <form id="add_form" method="POST" action="/app/">
+                <div class='group'>
+                    <input id='app_name' type='text' placeholder='应用名称' name='app_name' />
+                </div>
+                <div class='group'>
+                    <select id='host_list' name='host_list' multiple>
+                        {% for row in host_list %}
+                            <option value='{{row.nid}}'>{{row.hostname}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <input type='submit' value='提交' />
+                <input id='add_submit_ajax' type="button" value="ajax提交" />
+                <input id='cancel' type='button' value='取消' />
+                <span id='error_msg' color='red'></span>
+            </form>
+        </div>
+        <div class="edit-modal hide">
+            <form id='edit_form' method="POST" action="/host/">
+                    <input type='text' name='bid' style="display: none;"/>
+                    <input id='' type='text' placeholder='应用名称' name='app' />
+                    <select name='host_list' multiple>
+                        {% for row in host_list %}
+                            <option value='{{row.nid}}'>{{row.hostname}}</option>
+                        {% endfor %}
+                    </select>
+                <a id='ajax_submit_edit' style='display: inline-block; padding: 5px; background-color: blue; color: white;'>确认编辑</a>
+            </form>
+        </div>
+        <script src="/static/jquery-1.12.4.js"> </script>
+        <script>
+            $(function(){
+                $('#add_app').click(function(){
+                    $('.shade, .add-modal').removeClass('hide');
+                });
+                $('#cancel').click(function(){
+                    $('.shade, .add-modal, .edit-modal').addClass('hide');
+                });
+                $('#add_submit_ajax').click(function(){
+                    $.ajax({
+                        url: '/ajax_add_app/',
+                        //data: {"user": 123, 'host_list': [1,2,3,4]},
+                        data: $('#add_form').serialize(),
+                        type: "POST",
+                        traditional: true,
+                        dataType: "JSON",
+                        success: function(obj){
+
+                        },
+                        error: function(){
+
+                        }
+                    });
+                });
+                $('.edit').click(function(){
+                    $('.shade, .edit-modal').removeClass('hide');
+                    var hid_list = [];
+                    $(this).parent().prev().children().each(function(){
+                        var text = $(this).text()
+                        var hid = $(this).attr('hid')
+                        hid_list.push(hid)
+                    })
+                    var aid = $(this).parent().parent().attr('aid');
+                    var app_name = $(this).parent().prev().prev().text();
+                    $('#edit_form').find('input[name="app"]').val(app_name);
+                    $('#edit_form').find('input[name="bid"]').val(aid);
+                    $('#edit_form').find('select').val(hid_list);
+                });
+            })
+        </script>
+    </body>
+</html>
